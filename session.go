@@ -443,7 +443,7 @@ func (s *Session) waitForSendErr(hdr header, body []byte, errCh chan error) erro
 
 	select {
 	case err := <-errCh:
-		s.RTT = wrongRTT
+		//s.RTT = wrongRTT
 		return err
 	case <-s.shutdownCh:
 		s.RTT = wrongRTT
