@@ -78,7 +78,8 @@ type Session struct {
 	shutdownCh      chan struct{}
 	shutdownLock    sync.Mutex
 	shutdownErrLock sync.Mutex
-	// if the connection alive then RTT > 0 , else -1
+	// if the connection alive then RTT > 0 , else wrongRTT
+	// the fisrt Ping() return value equal this RTT
 	RTT time.Duration
 }
 
