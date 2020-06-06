@@ -921,6 +921,50 @@ func TestReadDeadline_BlockedRead(t *testing.T) {
 	}
 }
 
+func TestReadDeadline_BlockedRead(t *testing.T) {
+	client, server := testClientServer()
+	defer client.Close()
+	defer server.Close()
+
+	stream, err := client.Open()
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	defer stream.Close()
+
+	stream2, err := server.Accept()
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	defer stream2.Close()
+
+	// Start a read that will block
+	errCh := make(chan error, 1)
+	go func() {
+		buf := make([]byte, 4)
+		_, err := stream.Read(buf)
+		errCh <- err
+		close(errCh)
+	}()
+
+	// Wait to ensure the read has started.
+	time.Sleep(5 * time.Millisecond)
+
+	// Update the read deadline
+	if err := stream.SetReadDeadline(time.Now().Add(5 * time.Millisecond)); err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
+	select {
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("expected read timeout")
+	case err := <-errCh:
+		if err != ErrTimeout {
+			t.Fatalf("expected ErrTimeout; got %v", err)
+		}
+	}
+}
+
 func TestWriteDeadline(t *testing.T) {
 	client, server := testClientServer()
 	defer client.Close()
